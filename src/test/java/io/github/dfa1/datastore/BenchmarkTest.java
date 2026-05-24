@@ -13,7 +13,10 @@ import java.util.stream.LongStream;
 
 class BenchmarkTest {
 
-    private static final List<Integer> SCALES = List.of(252, 2_520, 10_000, 100_000);
+    private static final int TRADING_DAYS_PER_YEAR = 252;
+    private static final List<Duration> SCALES = List.of(1, 10, 20, 30, 40, 50, 100).stream()
+            .map(y -> Duration.ofDays((long) y * TRADING_DAYS_PER_YEAR))
+            .toList();
 
     private static final List<OhlcStore> STORES = List.of(
             new CsvOhlcStore(),
@@ -38,15 +41,17 @@ class BenchmarkTest {
     void storageComparison(@TempDir Path tmp) throws Exception {
         System.out.println();
 
-        for (int scale : SCALES) {
-            List<OhlcRecord> records = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2023, 1, 2), 100.0, 42L)
-                    .stream(scale).toList();
+        for (Duration scale : SCALES) {
+            int records = (int) scale.toDays();
+            int years   = records / TRADING_DAYS_PER_YEAR;
+            List<OhlcRecord> data = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2023, 1, 2), 100.0, 42L)
+                    .stream(records).toList();
 
             var results = STORES.stream()
-                    .map(store -> measure(store, records, tmp))
+                    .map(store -> measure(store, data, tmp))
                     .toList();
 
-            printTable(scale, results);
+            printTable(years, records, results);
         }
     }
 
@@ -96,13 +101,13 @@ class BenchmarkTest {
         return d.toNanos() / 1_000_000.0;
     }
 
-    private void printTable(int scale, List<Result> results) {
+    private void printTable(int years, int scale, List<Result> results) {
         long baseline = results.getFirst().bytes();
 
         String header = "%-14s  %12s  %8s  %30s  %30s  %8s".formatted(
                 "Format", "Size (bytes)", "vs CSV", "Write ms (avg/min/max)", "Read ms (avg/min/max)", "read spd");
         String sep   = "-".repeat(header.length());
-        String label = scale == 2_520 ? "10y" : scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
+        String label = years + "y";
 
         long csvReadNs = results.getFirst().read().avg().toNanos();
 
