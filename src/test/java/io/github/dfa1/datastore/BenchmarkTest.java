@@ -99,22 +99,28 @@ class BenchmarkTest {
     private void printTable(int scale, List<Result> results) {
         long baseline = results.getFirst().bytes();
 
-        String header = "%-14s  %12s  %8s  %30s  %30s".formatted(
-                "Format", "Size (bytes)", "vs CSV", "Write ms (avg/min/max)", "Read ms (avg/min/max)");
+        String header = "%-14s  %12s  %8s  %30s  %30s  %8s".formatted(
+                "Format", "Size (bytes)", "vs CSV", "Write ms (avg/min/max)", "Read ms (avg/min/max)", "read spd");
         String sep   = "-".repeat(header.length());
         String label = scale == 2_520 ? "10y" : scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
+
+        long csvReadNs = results.getFirst().read().avg().toNanos();
 
         System.out.println("=== " + scale + " records (" + label + ") ===");
         System.out.println(sep);
         System.out.println(header);
         System.out.println(sep);
 
-        results.forEach(r -> System.out.printf(
-                "%-14s  %,12d  %7.1fx  %8.2f / %7.2f / %7.2f    %8.2f / %7.2f / %7.2f%n",
+        results.forEach(r -> {
+            double readSpeedup = csvReadNs == 0 ? Double.NaN
+                    : (double) csvReadNs / Math.max(1, r.read().avg().toNanos());
+            System.out.printf(
+                "%-14s  %,12d  %7.1fx  %8.2f / %7.2f / %7.2f    %8.2f / %7.2f / %7.2f  %6.1fx%n",
                 r.type().label(), r.bytes(), (double) r.bytes() / baseline,
                 ms(r.write().avg()), ms(r.write().min()), ms(r.write().max()),
-                ms(r.read().avg()),  ms(r.read().min()),  ms(r.read().max())
-        ));
+                ms(r.read().avg()),  ms(r.read().min()),  ms(r.read().max()),
+                readSpeedup);
+        });
 
         System.out.println(sep);
 
