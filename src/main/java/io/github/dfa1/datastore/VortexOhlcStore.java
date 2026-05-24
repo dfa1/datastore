@@ -1,6 +1,7 @@
 package io.github.dfa1.datastore;
 
 import dev.vortex.api.DataSource;
+import dev.vortex.api.Expression;
 import dev.vortex.api.Partition;
 import dev.vortex.api.Scan;
 import dev.vortex.api.ScanOptions;
@@ -168,6 +169,34 @@ public class VortexOhlcStore implements OhlcStore {
                 }
             }
         }
+        return result;
+    }
+
+    @Override
+    public double[] readColumn(Path path, PriceType column) throws IOException {
+        Session session = Session.create();
+        String uri = path.toAbsolutePath().toUri().toString();
+        ScanOptions opts = ScanOptions.builder()
+                .projection(Expression.select(new String[]{column.fieldName()}, Expression.root()))
+                .build();
+
+        var values = new ArrayList<Double>();
+        DataSource ds = DataSource.open(session, uri);
+        Scan scan = ds.scan(opts);
+        while (scan.hasNext()) {
+            Partition partition = scan.next();
+            try (ArrowReader reader = partition.scanArrow(allocator)) {
+                while (reader.loadNextBatch()) {
+                    VectorSchemaRoot root = reader.getVectorSchemaRoot();
+                    Float8Vector vec = (Float8Vector) root.getVector(column.fieldName());
+                    for (int i = 0; i < root.getRowCount(); i++) {
+                        values.add(vec.get(i));
+                    }
+                }
+            }
+        }
+        double[] result = new double[values.size()];
+        for (int i = 0; i < values.size(); i++) result[i] = values.get(i);
         return result;
     }
 }

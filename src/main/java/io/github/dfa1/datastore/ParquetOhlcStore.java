@@ -5,6 +5,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroParquetWriter;
+import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
@@ -90,5 +91,26 @@ public class ParquetOhlcStore implements OhlcStore {
             }
         }
         return records;
+    }
+
+    @Override
+    public double[] readColumn(Path path, PriceType column) throws IOException {
+        Schema.Field src = SCHEMA.getField(column.fieldName());
+        Schema projected = Schema.createRecord("OhlcRecord", null, "io.github.dfa1.datastore", false,
+                List.of(new Schema.Field(src.name(), src.schema(), src.doc(), src.defaultVal())));
+
+        var values = new ArrayList<Double>();
+        try (var reader = AvroParquetReader.<GenericRecord>builder(new NioInputFile(path))
+                .withDataModel(GenericData.get())
+                .set(AvroReadSupport.AVRO_REQUESTED_PROJECTION, projected.toString())
+                .build()) {
+            GenericRecord rec;
+            while ((rec = reader.read()) != null) {
+                values.add((double) rec.get(column.fieldName()));
+            }
+        }
+        double[] result = new double[values.size()];
+        for (int i = 0; i < values.size(); i++) result[i] = values.get(i);
+        return result;
     }
 }

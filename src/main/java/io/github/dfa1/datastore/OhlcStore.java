@@ -9,4 +9,13 @@ public interface OhlcStore {
     void write(Stream<OhlcRecord> records, Path path) throws IOException;
     List<OhlcRecord> read(Path path) throws IOException;
     StoreType storeType();
+
+    default double[] readColumn(Path path, PriceType column) throws IOException {
+        List<OhlcRecord> records = read(path);
+        double[] result = new double[records.size()];
+        for (int i = 0; i < records.size(); i++) {
+            result[i] = column.extract(records.get(i));
+        }
+        return result;
+    }
 }

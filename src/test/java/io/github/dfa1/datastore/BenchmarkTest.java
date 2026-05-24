@@ -31,7 +31,7 @@ class BenchmarkTest {
     private static final int MEASUREMENT_RUNS = 10;
 
     private record Stats(long avg, long min, long max) {}
-    private record Result(String format, long bytes, Stats write, Stats read) {}
+    private record Result(String format, long bytes, Stats write, Stats read, Stats colRead) {}
 
     @Test
     void storageComparison(@TempDir Path tmp) throws Exception {
@@ -56,22 +56,28 @@ class BenchmarkTest {
             for (int i = 0; i < WARMUP_RUNS; i++) {
                 store.write(records.stream(), file);
                 store.read(file);
+                store.readColumn(file, PriceType.CLOSE);
             }
 
-            long[] writeSamples = new long[MEASUREMENT_RUNS];
-            long[] readSamples  = new long[MEASUREMENT_RUNS];
+            long[] writeSamples   = new long[MEASUREMENT_RUNS];
+            long[] readSamples    = new long[MEASUREMENT_RUNS];
+            long[] colReadSamples = new long[MEASUREMENT_RUNS];
             for (int i = 0; i < MEASUREMENT_RUNS; i++) {
                 long t0 = System.nanoTime();
                 store.write(records.stream(), file);
-                writeSamples[i] = (System.nanoTime() - t0) / 1_000_000;
+                writeSamples[i] = System.nanoTime() - t0;
 
                 long t1 = System.nanoTime();
                 store.read(file);
-                readSamples[i] = (System.nanoTime() - t1) / 1_000_000;
+                readSamples[i] = System.nanoTime() - t1;
+
+                long t2 = System.nanoTime();
+                store.readColumn(file, PriceType.CLOSE);
+                colReadSamples[i] = System.nanoTime() - t2;
             }
 
             return new Result(store.storeType().label(), Files.size(file),
-                    stats(writeSamples), stats(readSamples));
+                    stats(writeSamples), stats(readSamples), stats(colReadSamples));
         } catch (Exception e) {
             throw new RuntimeException("store " + store.storeType().label() + " failed", e);
         }
@@ -82,10 +88,14 @@ class BenchmarkTest {
         return new Stats((long) s.getAverage(), s.getMin(), s.getMax());
     }
 
+    private static double ms(long nanos) {
+        return nanos / 1_000_000.0;
+    }
+
     private void printTable(int scale, List<Result> results) {
         long baseline = results.getFirst().bytes(); // CSV is baseline
 
-        String header = "%-14s  %12s  %8s  %22s  %22s".formatted(
+        String header = "%-14s  %12s  %8s  %30s  %30s".formatted(
                 "Format", "Size (bytes)", "vs CSV", "Write ms (avg/min/max)", "Read ms (avg/min/max)");
         String sep   = "-".repeat(header.length());
         String label = scale == 2_520 ? "10y" : scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
@@ -96,13 +106,32 @@ class BenchmarkTest {
         System.out.println(sep);
 
         results.forEach(r -> System.out.printf(
-                "%-14s  %,12d  %7.1fx  %6d / %4d / %4d    %6d / %4d / %4d%n",
+                "%-14s  %,12d  %7.1fx  %8.2f / %7.2f / %7.2f    %8.2f / %7.2f / %7.2f%n",
                 r.format(), r.bytes(), (double) r.bytes() / baseline,
-                r.write().avg(), r.write().min(), r.write().max(),
-                r.read().avg(),  r.read().min(),  r.read().max()
+                ms(r.write().avg()), ms(r.write().min()), ms(r.write().max()),
+                ms(r.read().avg()),  ms(r.read().min()),  ms(r.read().max())
         ));
 
         System.out.println(sep);
+
+        String colHeader = "%-14s  %36s  %36s  %7s".formatted(
+                "Format", "Full read ms (avg/min/max)", "Col read ms (avg/min/max)", "speedup");
+        String colSep = "-".repeat(colHeader.length());
+        System.out.println();
+        System.out.println("  readColumn(CLOSE):");
+        System.out.println(colSep);
+        System.out.println(colHeader);
+        System.out.println(colSep);
+        results.forEach(r -> {
+            double speedup = r.read().avg() == 0 ? Double.NaN
+                    : (double) r.read().avg() / Math.max(1, r.colRead().avg());
+            System.out.printf("%-14s  %8.2f / %7.2f / %7.2f      %8.2f / %7.2f / %7.2f   %5.1fx%n",
+                    r.format(),
+                    ms(r.read().avg()),    ms(r.read().min()),    ms(r.read().max()),
+                    ms(r.colRead().avg()), ms(r.colRead().min()), ms(r.colRead().max()),
+                    speedup);
+        });
+        System.out.println(colSep);
         System.out.println();
     }
 }
