@@ -9,12 +9,12 @@ public class OhlcGenerator {
     private static final double DAILY_VOLATILITY      = 0.02;
     private static final double INTRADAY_RANGE_FACTOR = 0.03;
 
-    private final String    symbol;
+    private final Symbol    symbol;
     private final LocalDate startDate;
     private final double    initialPrice;
     private final long      seed;
 
-    public OhlcGenerator(String symbol, LocalDate startDate, double initialPrice, long seed) {
+    public OhlcGenerator(Symbol symbol, LocalDate startDate, double initialPrice, long seed) {
         this.symbol       = symbol;
         this.startDate    = startDate;
         this.initialPrice = initialPrice;

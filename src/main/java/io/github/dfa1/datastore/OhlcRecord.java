@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public record OhlcRecord(
         LocalDate date,
-        String symbol,
+        Symbol symbol,
         double open,
         double high,
         double low,

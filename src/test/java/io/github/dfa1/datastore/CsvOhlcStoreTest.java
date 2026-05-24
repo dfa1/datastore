@@ -20,7 +20,7 @@ class CsvOhlcStoreTest extends AbstractOhlcStoreTest {
     @Test
     void fileHasHeader(@TempDir Path tmp) throws Exception {
         Path file = tmp.resolve("ohlc.csv");
-        createSut().write(new OhlcGenerator("X", LocalDate.of(2024, 1, 2), 50.0, 1L).stream(1), file);
+        createSut().write(new OhlcGenerator(new Symbol("X"), LocalDate.of(2024, 1, 2), 50.0, 1L).stream(1), file);
         assertEquals("date,symbol,open,high,low,close,volume", Files.readAllLines(file).getFirst());
     }
 
@@ -28,7 +28,7 @@ class CsvOhlcStoreTest extends AbstractOhlcStoreTest {
     void lineCountMatchesRecords(@TempDir Path tmp) throws Exception {
         int count = 500;
         Path file = tmp.resolve("ohlc.csv");
-        createSut().write(new OhlcGenerator("Y", LocalDate.of(2023, 6, 1), 200.0, 7L).stream(count), file);
+        createSut().write(new OhlcGenerator(new Symbol("Y"), LocalDate.of(2023, 6, 1), 200.0, 7L).stream(count), file);
         assertEquals(count + 1, Files.lines(file).count()); // +1 for header
     }
 

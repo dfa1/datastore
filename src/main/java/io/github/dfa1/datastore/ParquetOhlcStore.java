@@ -60,7 +60,7 @@ public class ParquetOhlcStore implements OhlcStore {
                 var r   = it.next();
                 var rec = new GenericData.Record(SCHEMA);
                 rec.put("date",   (int) r.date().toEpochDay());
-                rec.put("symbol", r.symbol());
+                rec.put("symbol", r.symbol().value());
                 rec.put("open",   r.open());
                 rec.put("high",   r.high());
                 rec.put("low",    r.low());
@@ -81,7 +81,7 @@ public class ParquetOhlcStore implements OhlcStore {
             while ((rec = reader.read()) != null) {
                 records.add(new OhlcRecord(
                         LocalDate.ofEpochDay((int) rec.get("date")),
-                        rec.get("symbol").toString(),
+                        new Symbol(rec.get("symbol").toString()),
                         (double) rec.get("open"),
                         (double) rec.get("high"),
                         (double) rec.get("low"),
@@ -94,7 +94,7 @@ public class ParquetOhlcStore implements OhlcStore {
     }
 
     @Override
-    public double[] readColumn(Path path, PriceType column) throws IOException {
+    public double[] readColumn(Path path, NumericColumn column) throws IOException {
         Schema.Field src = SCHEMA.getField(column.fieldName());
         Schema projected = Schema.createRecord("OhlcRecord", null, "io.github.dfa1.datastore", false,
                 List.of(new Schema.Field(src.name(), src.schema(), src.doc(), src.defaultVal())));
@@ -106,7 +106,8 @@ public class ParquetOhlcStore implements OhlcStore {
                 .build()) {
             GenericRecord rec;
             while ((rec = reader.read()) != null) {
-                values.add((double) rec.get(column.fieldName()));
+                Object raw = rec.get(column.fieldName());
+                values.add(column == NumericColumn.VOLUME ? (double)(long) raw : (double) raw);
             }
         }
         double[] result = new double[values.size()];

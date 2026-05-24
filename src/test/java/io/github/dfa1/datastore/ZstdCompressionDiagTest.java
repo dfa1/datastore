@@ -18,7 +18,7 @@ class ZstdCompressionDiagTest {
 
     @Test
     void compareZstdApproaches(@TempDir Path tmp) throws Exception {
-        List<OhlcRecord> records = new OhlcGenerator("ACME", LocalDate.of(2020, 1, 1), 100.0, 42L)
+        List<OhlcRecord> records = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2020, 1, 1), 100.0, 42L)
                 .stream(10_000).toList();
 
         Path csv  = tmp.resolve("data.csv");

@@ -10,7 +10,7 @@ public interface OhlcStore {
     List<OhlcRecord> read(Path path) throws IOException;
     StoreType storeType();
 
-    default double[] readColumn(Path path, PriceType column) throws IOException {
+    default double[] readColumn(Path path, NumericColumn column) throws IOException {
         List<OhlcRecord> records = read(path);
         double[] result = new double[records.size()];
         for (int i = 0; i < records.size(); i++) {

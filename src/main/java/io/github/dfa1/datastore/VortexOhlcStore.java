@@ -116,7 +116,7 @@ public class VortexOhlcStore implements OhlcStore {
             for (int i = 0; i < n; i++) {
                 var r = batch.get(i);
                 dateVec.setSafe(i,   (int) r.date().toEpochDay());
-                symbolVec.setSafe(i, r.symbol().getBytes(StandardCharsets.UTF_8));
+                symbolVec.setSafe(i, r.symbol().value().getBytes(StandardCharsets.UTF_8));
                 openVec.setSafe(i,   r.open());
                 highVec.setSafe(i,   r.high());
                 lowVec.setSafe(i,    r.low());
@@ -158,7 +158,7 @@ public class VortexOhlcStore implements OhlcStore {
                     for (int i = 0; i < root.getRowCount(); i++) {
                         result.add(new OhlcRecord(
                                 LocalDate.ofEpochDay(dateVec.get(i)),
-                                new String(symbolVec.get(i), StandardCharsets.UTF_8),
+                                new Symbol(new String(symbolVec.get(i), StandardCharsets.UTF_8)),
                                 openVec.get(i),
                                 highVec.get(i),
                                 lowVec.get(i),
@@ -173,7 +173,7 @@ public class VortexOhlcStore implements OhlcStore {
     }
 
     @Override
-    public double[] readColumn(Path path, PriceType column) throws IOException {
+    public double[] readColumn(Path path, NumericColumn column) throws IOException {
         Session session = Session.create();
         String uri = path.toAbsolutePath().toUri().toString();
         ScanOptions opts = ScanOptions.builder()
@@ -188,9 +188,12 @@ public class VortexOhlcStore implements OhlcStore {
             try (ArrowReader reader = partition.scanArrow(allocator)) {
                 while (reader.loadNextBatch()) {
                     VectorSchemaRoot root = reader.getVectorSchemaRoot();
-                    Float8Vector vec = (Float8Vector) root.getVector(column.fieldName());
-                    for (int i = 0; i < root.getRowCount(); i++) {
-                        values.add(vec.get(i));
+                    if (column == NumericColumn.VOLUME) {
+                        BigIntVector vec = (BigIntVector) root.getVector(column.fieldName());
+                        for (int i = 0; i < root.getRowCount(); i++) values.add((double) vec.get(i));
+                    } else {
+                        Float8Vector vec = (Float8Vector) root.getVector(column.fieldName());
+                        for (int i = 0; i < root.getRowCount(); i++) values.add(vec.get(i));
                     }
                 }
             }

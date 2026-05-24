@@ -14,7 +14,7 @@ class OhlcGeneratorTest {
     private static final int COUNT = 1_000;
 
     private static OhlcGenerator gen(long seed) {
-        return new OhlcGenerator("ACME", START, 100.0, seed);
+        return new OhlcGenerator(new Symbol("ACME"), START, 100.0, seed);
     }
 
     @Test

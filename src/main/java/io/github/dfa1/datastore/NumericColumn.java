@@ -2,15 +2,16 @@ package io.github.dfa1.datastore;
 
 import java.util.function.ToDoubleFunction;
 
-public enum PriceType {
+public enum NumericColumn {
     OPEN(OhlcRecord::open),
     HIGH(OhlcRecord::high),
     LOW(OhlcRecord::low),
-    CLOSE(OhlcRecord::close);
+    CLOSE(OhlcRecord::close),
+    VOLUME(r -> (double) r.volume());
 
     private final ToDoubleFunction<OhlcRecord> extractor;
 
-    PriceType(ToDoubleFunction<OhlcRecord> extractor) {
+    NumericColumn(ToDoubleFunction<OhlcRecord> extractor) {
         this.extractor = extractor;
     }
 

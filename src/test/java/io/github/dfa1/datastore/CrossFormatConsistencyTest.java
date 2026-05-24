@@ -26,7 +26,7 @@ class CrossFormatConsistencyTest {
 
     @Test
     void allFormatsRoundTripIdentically(@TempDir Path tmp) throws Exception {
-        List<OhlcRecord> source = new OhlcGenerator("ACME", LocalDate.of(2020, 1, 1), 100.0, 42L)
+        List<OhlcRecord> source = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2020, 1, 1), 100.0, 42L)
                 .stream(1_000).toList();
 
         for (OhlcStore store : STORES) {

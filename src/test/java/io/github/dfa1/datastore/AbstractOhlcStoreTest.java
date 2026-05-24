@@ -21,7 +21,7 @@ abstract class AbstractOhlcStoreTest {
 
     @Test
     void roundTrip(@TempDir Path tmp) throws Exception {
-        var records = new OhlcGenerator("ACME", LocalDate.of(2020, 1, 1), 100.0, 42L)
+        var records = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2020, 1, 1), 100.0, 42L)
                 .stream(1_000).toList();
         Path file = tmp.resolve("ohlc.dat");
         OhlcStore sut = createSut();

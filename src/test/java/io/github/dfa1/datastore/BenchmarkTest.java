@@ -39,7 +39,7 @@ class BenchmarkTest {
         System.out.println();
 
         for (int scale : SCALES) {
-            List<OhlcRecord> records = new OhlcGenerator("ACME", LocalDate.of(2023, 1, 2), 100.0, 42L)
+            List<OhlcRecord> records = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2023, 1, 2), 100.0, 42L)
                     .stream(scale).toList();
 
             var results = STORES.stream()
@@ -57,7 +57,7 @@ class BenchmarkTest {
             for (int i = 0; i < WARMUP_RUNS; i++) {
                 store.write(records.stream(), file);
                 store.read(file);
-                store.readColumn(file, PriceType.CLOSE);
+                store.readColumn(file, NumericColumn.CLOSE);
             }
 
             long[] writeSamples   = new long[MEASUREMENT_RUNS];
@@ -73,7 +73,7 @@ class BenchmarkTest {
                 readSamples[i] = System.nanoTime() - t1;
 
                 long t2 = System.nanoTime();
-                store.readColumn(file, PriceType.CLOSE);
+                store.readColumn(file, NumericColumn.CLOSE);
                 colReadSamples[i] = System.nanoTime() - t2;
             }
 
