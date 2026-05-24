@@ -131,7 +131,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
                 <configuration>
-                    <jvm>/Library/Java/JavaVirtualMachines/graalvm-25.jdk/Contents/Home/bin/java</jvm>
                     <argLine>--add-opens java.base/java.nio=ALL-UNNAMED --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow</argLine>
                 </configuration>
             </plugin>
