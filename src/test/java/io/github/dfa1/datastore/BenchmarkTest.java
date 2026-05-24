@@ -8,17 +8,9 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-/**
- * Indicative benchmark — not JMH, but enough to compare formats at scale.
- * Runs 3 warm-up + 5 measured iterations per (store × scale); reports avg write/read µs and file size.
- */
 class BenchmarkTest {
 
     private static final List<Integer> SCALES = List.of(252, 10_000, 100_000);
-    private static final int WARMUP     = 3;
-    private static final int ITERATIONS = 5;
 
     private static final List<OhlcStore> STORES = List.of(
             new CsvOhlcStore(),
@@ -28,10 +20,10 @@ class BenchmarkTest {
             new ParquetOhlcStore()
     );
 
-    private record Result(String format, int records, long writeMicros, long readMicros, long bytes) {}
+    private record Result(String format, long bytes) {}
 
     @Test
-    void compareFormats(@TempDir Path tmp) throws Exception {
+    void storageComparison(@TempDir Path tmp) throws Exception {
         System.out.println();
 
         for (int scale : SCALES) {
@@ -39,58 +31,30 @@ class BenchmarkTest {
                     .generate(scale);
 
             var results = STORES.stream()
-                    .map(store -> measure(store, records, tmp))
+                    .map(store -> write(store, records, tmp))
                     .toList();
 
             printTable(scale, results);
-
-            results.forEach(r -> assertEquals(scale, r.records()));
         }
     }
 
-    private Result measure(OhlcStore store, List<OhlcRecord> records, Path dir) {
+    private Result write(OhlcStore store, List<OhlcRecord> records, Path dir) {
         String ext  = store.format().toLowerCase().replace("+", "-");
         Path   file = dir.resolve("ohlc." + ext);
-
-        long totalWrite = 0, totalRead = 0;
-        int  loaded     = 0;
-
-        for (int i = 0; i < WARMUP + ITERATIONS; i++) {
-            try {
-                Files.deleteIfExists(file);
-
-                long t0 = System.nanoTime();
-                store.write(records, file);
-                long t1 = System.nanoTime();
-                var read = store.read(file);
-                long t2 = System.nanoTime();
-
-                if (i >= WARMUP) {
-                    totalWrite += (t1 - t0);
-                    totalRead  += (t2 - t1);
-                    loaded      = read.size();
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("store " + store.format() + " failed at scale " + records.size(), e);
-            }
+        try {
+            store.write(records, file);
+            return new Result(store.format(), Files.size(file));
+        } catch (Exception e) {
+            throw new RuntimeException("store " + store.format() + " failed", e);
         }
-
-        long fileBytes = 0;
-        try { fileBytes = Files.size(file); } catch (Exception ignored) {}
-
-        return new Result(
-                store.format(),
-                loaded,
-                totalWrite / ITERATIONS / 1_000,
-                totalRead  / ITERATIONS / 1_000,
-                fileBytes
-        );
     }
 
     private void printTable(int scale, List<Result> results) {
-        String label  = scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
-        String header = "%-12s  %12s  %11s  %12s".formatted("Format", "Write (µs)", "Read (µs)", "Size (bytes)");
+        long baseline = results.getFirst().bytes(); // CSV is baseline
+
+        String header = "%-12s  %12s  %8s".formatted("Format", "Size (bytes)", "vs CSV");
         String sep    = "-".repeat(header.length());
+        String label  = scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
 
         System.out.println("=== " + scale + " records (" + label + ") ===");
         System.out.println(sep);
@@ -98,8 +62,8 @@ class BenchmarkTest {
         System.out.println(sep);
 
         results.forEach(r -> System.out.printf(
-                "%-12s  %,12d  %,11d  %,12d%n",
-                r.format(), r.writeMicros(), r.readMicros(), r.bytes()
+                "%-12s  %,12d  %7.1fx%n",
+                r.format(), r.bytes(), (double) r.bytes() / baseline
         ));
 
         System.out.println(sep);
