@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -30,7 +31,7 @@ class ZstdCompressionDiagTest {
 
         // with level 9
         try (var zstd = new ZstdOutputStream(new BufferedOutputStream(Files.newOutputStream(zst2)), 9);
-             var out  = new OutputStreamWriter(zstd, "UTF-8");
+             var out  = new OutputStreamWriter(zstd, StandardCharsets.UTF_8);
              var sw   = CsvOhlcStore.MAPPER.writer(CsvOhlcStore.SCHEMA).writeValues(out)) {
             var it = records.stream().iterator();
             while (it.hasNext()) sw.write(it.next());
