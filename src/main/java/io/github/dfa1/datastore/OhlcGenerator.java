@@ -21,7 +21,7 @@ public class OhlcGenerator {
         this.seed         = seed;
     }
 
-    /** Lazy stream of {@code count} trading-day records. Never materializes the full sequence. */
+    /** Lazy stream of {@code count} trading-day records. Sequential only — shared mutable state in lambda capture. */
     public Stream<OhlcRecord> stream(int count) {
         var random     = new java.util.Random(seed);
         double[] prev  = {initialPrice};
