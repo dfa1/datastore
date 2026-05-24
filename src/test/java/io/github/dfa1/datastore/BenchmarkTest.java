@@ -24,7 +24,8 @@ class BenchmarkTest {
             new ZstdParquetOhlcStore(),
             new TypedParquetOhlcStore(),
             new GzipTypedParquetOhlcStore(),
-            new ZstdTypedParquetOhlcStore()
+            new ZstdTypedParquetOhlcStore(),
+            new VortexOhlcStore()
     );
 
     private record Result(String format, long bytes) {}
