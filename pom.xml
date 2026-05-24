@@ -21,16 +21,16 @@
         <!-- dependency versions -->
         <parquet.version>1.15.0</parquet.version>
         <hadoop.version>3.4.1</hadoop.version>
-        <opencsv.version>5.9</opencsv.version>
+        <fastcsv.version>3.4.0</fastcsv.version>
         <junit.version>5.11.4</junit.version>
     </properties>
 
     <dependencies>
         <!-- CSV -->
         <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>${opencsv.version}</version>
+            <groupId>de.siegmar</groupId>
+            <artifactId>fastcsv</artifactId>
+            <version>${fastcsv.version}</version>
         </dependency>
 
         <!-- Parquet -->
