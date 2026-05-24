@@ -12,12 +12,12 @@ public record OhlcRecord(
         long volume
 ) {
     public OhlcRecord {
+        if (open < 0 || high < 0 || low < 0 || close < 0)
+            throw new IllegalArgumentException("prices must be non-negative");
         if (high < open || high < close)
             throw new IllegalArgumentException("high must be >= open and close");
         if (low > open || low > close)
             throw new IllegalArgumentException("low must be <= open and close");
-        if (low < 0 || open < 0)
-            throw new IllegalArgumentException("prices must be positive");
         if (volume < 0)
             throw new IllegalArgumentException("volume must be non-negative");
     }
