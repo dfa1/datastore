@@ -5,7 +5,6 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroParquetWriter;
-import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
@@ -16,18 +15,19 @@ import java.util.List;
 
 public class ParquetOhlcStore implements OhlcStore {
 
+    // int32-backed DECIMAL: max price = 21_474_836.47
     static final Schema SCHEMA = new Schema.Parser().parse("""
             {
               "type": "record",
               "name": "OhlcRecord",
               "namespace": "io.github.dfa1.datastore",
               "fields": [
-                {"name": "date",   "type": "string"},
+                {"name": "date",   "type": {"type": "int",  "logicalType": "date"}},
                 {"name": "symbol", "type": "string"},
-                {"name": "open",   "type": "double"},
-                {"name": "high",   "type": "double"},
-                {"name": "low",    "type": "double"},
-                {"name": "close",  "type": "double"},
+                {"name": "open",   "type": {"type": "int",  "logicalType": "decimal", "precision": 9, "scale": 2}},
+                {"name": "high",   "type": {"type": "int",  "logicalType": "decimal", "precision": 9, "scale": 2}},
+                {"name": "low",    "type": {"type": "int",  "logicalType": "decimal", "precision": 9, "scale": 2}},
+                {"name": "close",  "type": {"type": "int",  "logicalType": "decimal", "precision": 9, "scale": 2}},
                 {"name": "volume", "type": "long"}
               ]
             }
@@ -58,12 +58,12 @@ public class ParquetOhlcStore implements OhlcStore {
                 .build()) {
             for (var r : records) {
                 var rec = new GenericData.Record(SCHEMA);
-                rec.put("date",   r.date().toString());
+                rec.put("date",   (int) r.date().toEpochDay());
                 rec.put("symbol", r.symbol());
-                rec.put("open",   r.open());
-                rec.put("high",   r.high());
-                rec.put("low",    r.low());
-                rec.put("close",  r.close());
+                rec.put("open",   (int) Math.round(r.open()  * 100));
+                rec.put("high",   (int) Math.round(r.high()  * 100));
+                rec.put("low",    (int) Math.round(r.low()   * 100));
+                rec.put("close",  (int) Math.round(r.close() * 100));
                 rec.put("volume", r.volume());
                 writer.write(rec);
             }
@@ -79,12 +79,12 @@ public class ParquetOhlcStore implements OhlcStore {
             GenericRecord rec;
             while ((rec = reader.read()) != null) {
                 records.add(new OhlcRecord(
-                        LocalDate.parse(rec.get("date").toString()),
+                        LocalDate.ofEpochDay((int) rec.get("date")),
                         rec.get("symbol").toString(),
-                        (double) rec.get("open"),
-                        (double) rec.get("high"),
-                        (double) rec.get("low"),
-                        (double) rec.get("close"),
+                        (int) rec.get("open")  / 100.0,
+                        (int) rec.get("high")  / 100.0,
+                        (int) rec.get("low")   / 100.0,
+                        (int) rec.get("close") / 100.0,
                         (long) rec.get("volume")
                 ));
             }

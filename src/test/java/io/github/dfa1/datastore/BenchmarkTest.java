@@ -22,9 +22,6 @@ class BenchmarkTest {
             new ZstdCsvOhlcStore(),
             new ZstdJsonOhlcStore(),
             new ZstdParquetOhlcStore(),
-            new TypedParquetOhlcStore(),
-            new GzipTypedParquetOhlcStore(),
-            new ZstdTypedParquetOhlcStore(),
             new VortexOhlcStore()
     );
 
