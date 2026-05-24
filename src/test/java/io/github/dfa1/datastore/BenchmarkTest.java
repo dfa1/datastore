@@ -5,6 +5,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.LongSummaryStatistics;
@@ -30,8 +31,8 @@ class BenchmarkTest {
     private static final int WARMUP_RUNS      = 2;
     private static final int MEASUREMENT_RUNS = 10;
 
-    private record Stats(long avg, long min, long max) {}
-    private record Result(String format, long bytes, Stats write, Stats read, Stats colRead) {}
+    private record Stats(Duration avg, Duration min, Duration max) {}
+    private record Result(StoreType type, long bytes, Stats write, Stats read, Stats colRead) {}
 
     @Test
     void storageComparison(@TempDir Path tmp) throws Exception {
@@ -50,8 +51,8 @@ class BenchmarkTest {
     }
 
     private Result measure(OhlcStore store, List<OhlcRecord> records, Path dir) {
-        String ext  = store.storeType().label().toLowerCase().replace("+", "-");
-        Path   file = dir.resolve("ohlc." + ext);
+        StoreType type = store.storeType();
+        Path      file = dir.resolve("ohlc." + type.label().toLowerCase().replace("+", "-"));
         try {
             for (int i = 0; i < WARMUP_RUNS; i++) {
                 store.write(records.stream(), file);
@@ -76,24 +77,27 @@ class BenchmarkTest {
                 colReadSamples[i] = System.nanoTime() - t2;
             }
 
-            return new Result(store.storeType().label(), Files.size(file),
+            return new Result(type, Files.size(file),
                     stats(writeSamples), stats(readSamples), stats(colReadSamples));
         } catch (Exception e) {
-            throw new RuntimeException("store " + store.storeType().label() + " failed", e);
+            throw new RuntimeException("store " + type.label() + " failed", e);
         }
     }
 
     private static Stats stats(long[] samples) {
         LongSummaryStatistics s = LongStream.of(samples).summaryStatistics();
-        return new Stats((long) s.getAverage(), s.getMin(), s.getMax());
+        return new Stats(
+                Duration.ofNanos((long) s.getAverage()),
+                Duration.ofNanos(s.getMin()),
+                Duration.ofNanos(s.getMax()));
     }
 
-    private static double ms(long nanos) {
-        return nanos / 1_000_000.0;
+    private static double ms(Duration d) {
+        return d.toNanos() / 1_000_000.0;
     }
 
     private void printTable(int scale, List<Result> results) {
-        long baseline = results.getFirst().bytes(); // CSV is baseline
+        long baseline = results.getFirst().bytes();
 
         String header = "%-14s  %12s  %8s  %30s  %30s".formatted(
                 "Format", "Size (bytes)", "vs CSV", "Write ms (avg/min/max)", "Read ms (avg/min/max)");
@@ -107,7 +111,7 @@ class BenchmarkTest {
 
         results.forEach(r -> System.out.printf(
                 "%-14s  %,12d  %7.1fx  %8.2f / %7.2f / %7.2f    %8.2f / %7.2f / %7.2f%n",
-                r.format(), r.bytes(), (double) r.bytes() / baseline,
+                r.type().label(), r.bytes(), (double) r.bytes() / baseline,
                 ms(r.write().avg()), ms(r.write().min()), ms(r.write().max()),
                 ms(r.read().avg()),  ms(r.read().min()),  ms(r.read().max())
         ));
@@ -123,10 +127,11 @@ class BenchmarkTest {
         System.out.println(colHeader);
         System.out.println(colSep);
         results.forEach(r -> {
-            double speedup = r.read().avg() == 0 ? Double.NaN
-                    : (double) r.read().avg() / Math.max(1, r.colRead().avg());
+            long readNs    = r.read().avg().toNanos();
+            long colReadNs = r.colRead().avg().toNanos();
+            double speedup = readNs == 0 ? Double.NaN : (double) readNs / Math.max(1, colReadNs);
             System.out.printf("%-14s  %8.2f / %7.2f / %7.2f      %8.2f / %7.2f / %7.2f   %5.1fx%n",
-                    r.format(),
+                    r.type().label(),
                     ms(r.read().avg()),    ms(r.read().min()),    ms(r.read().max()),
                     ms(r.colRead().avg()), ms(r.colRead().min()), ms(r.colRead().max()),
                     speedup);
