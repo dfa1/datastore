@@ -22,6 +22,7 @@
         <parquet.version>1.15.0</parquet.version>
         <hadoop.version>3.4.1</hadoop.version>
         <fastcsv.version>3.4.0</fastcsv.version>
+        <jackson.version>2.18.3</jackson.version>
         <junit.version>5.11.4</junit.version>
     </properties>
 
@@ -31,6 +32,18 @@
             <groupId>de.siegmar</groupId>
             <artifactId>fastcsv</artifactId>
             <version>${fastcsv.version}</version>
+        </dependency>
+
+        <!-- JSON -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Parquet -->
