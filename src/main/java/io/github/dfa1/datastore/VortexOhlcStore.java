@@ -31,6 +31,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class VortexOhlcStore implements OhlcStore {
@@ -51,16 +52,20 @@ public class VortexOhlcStore implements OhlcStore {
             Field.notNullable("volume", new ArrowType.Int(64, true))
     ));
 
-    private final StoreType             type;
-    private final HashMap<String, String> options;
+    private final StoreType           type;
+    private final Map<String, String> options;
+    private final Session             session;
+    private final BufferAllocator     allocator;
 
     public VortexOhlcStore() {
         this(StoreType.VORTEX, new HashMap<>());
     }
 
-    VortexOhlcStore(StoreType type, HashMap<String, String> options) {
-        this.type    = type;
-        this.options = options;
+    VortexOhlcStore(StoreType type, Map<String, String> options) {
+        this.type      = type;
+        this.options   = options;
+        this.session   = Session.create();
+        this.allocator = ArrowAllocation.rootAllocator();
     }
 
     @Override
@@ -70,8 +75,6 @@ public class VortexOhlcStore implements OhlcStore {
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {
-        BufferAllocator allocator = ArrowAllocation.rootAllocator();
-        Session session = Session.create();
         String uri = path.toAbsolutePath().toUri().toString();
 
         try (VortexWriter writer = VortexWriter.create(session, uri, SCHEMA, options, allocator)) {
@@ -132,8 +135,6 @@ public class VortexOhlcStore implements OhlcStore {
 
     @Override
     public List<OhlcRecord> read(Path path) throws IOException {
-        BufferAllocator allocator = ArrowAllocation.rootAllocator();
-        Session session = Session.create();
         String uri = path.toAbsolutePath().toUri().toString();
 
         var result = new ArrayList<OhlcRecord>();
