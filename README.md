@@ -110,10 +110,10 @@ Parquet+GZIP is smallest. Vortex reads in 4 ms — 5× faster than any Parquet v
 
 ```bash
 # verify all formats produce identical data
-mvn test -Dtest=CrossFormatConsistencyTest
+./mvnw test -Dtest=CrossFormatConsistencyTest
 
 # storage + timing benchmark (prints tables to stdout)
-mvn test -Dtest=BenchmarkTest
+./mvnw test -Dtest=BenchmarkTest
 ```
 
 ## Stack
