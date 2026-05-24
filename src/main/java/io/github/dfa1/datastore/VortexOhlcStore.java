@@ -54,7 +54,6 @@ public class VortexOhlcStore implements OhlcStore {
 
     private final StoreType           type;
     private final Map<String, String> options;
-    private final Session             session;
     private final BufferAllocator     allocator;
 
     public VortexOhlcStore() {
@@ -64,7 +63,6 @@ public class VortexOhlcStore implements OhlcStore {
     VortexOhlcStore(StoreType type, Map<String, String> options) {
         this.type      = type;
         this.options   = options;
-        this.session   = Session.create();
         this.allocator = ArrowAllocation.rootAllocator();
     }
 
@@ -75,6 +73,7 @@ public class VortexOhlcStore implements OhlcStore {
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {
+        Session session = Session.create();
         String uri = path.toAbsolutePath().toUri().toString();
 
         try (VortexWriter writer = VortexWriter.create(session, uri, SCHEMA, options, allocator)) {
@@ -135,6 +134,7 @@ public class VortexOhlcStore implements OhlcStore {
 
     @Override
     public List<OhlcRecord> read(Path path) throws IOException {
+        Session session = Session.create();
         String uri = path.toAbsolutePath().toUri().toString();
 
         var result = new ArrayList<OhlcRecord>();
