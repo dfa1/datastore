@@ -9,8 +9,6 @@ class VortexOhlcStoreTest extends AbstractOhlcStoreTest {
     @Override
     OhlcStore createSut() { return new VortexOhlcStore(); }
 
-    @Test
-    void formatName() {
-        assertEquals("Vortex", createSut().format());
-    }
+    @Override
+    StoreType expectedStoreType() { return StoreType.VORTEX; }
 }

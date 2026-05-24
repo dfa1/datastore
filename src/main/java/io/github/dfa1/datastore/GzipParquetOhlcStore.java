@@ -5,6 +5,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 public class GzipParquetOhlcStore extends ParquetOhlcStore {
 
     public GzipParquetOhlcStore() {
-        super(CompressionCodecName.GZIP, "Parquet+GZIP");
+        super(CompressionCodecName.GZIP, StoreType.PARQUET_GZIP);
     }
 }

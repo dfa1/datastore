@@ -9,8 +9,6 @@ class ParquetOhlcStoreTest extends AbstractOhlcStoreTest {
     @Override
     OhlcStore createSut() { return new ParquetOhlcStore(); }
 
-    @Test
-    void formatName() {
-        assertEquals("Parquet", createSut().format());
-    }
+    @Override
+    StoreType expectedStoreType() { return StoreType.PARQUET; }
 }

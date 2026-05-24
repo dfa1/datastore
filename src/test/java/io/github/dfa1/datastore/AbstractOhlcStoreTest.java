@@ -12,6 +12,13 @@ abstract class AbstractOhlcStoreTest {
 
     abstract OhlcStore createSut();
 
+    abstract StoreType expectedStoreType();
+
+    @Test
+    void storeType() {
+        assertEquals(expectedStoreType(), createSut().storeType());
+    }
+
     @Test
     void roundTrip(@TempDir Path tmp) throws Exception {
         var records = new OhlcGenerator("ACME", LocalDate.of(2020, 1, 1), 100.0, 42L)

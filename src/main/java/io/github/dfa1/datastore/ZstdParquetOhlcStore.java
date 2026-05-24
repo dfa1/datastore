@@ -5,6 +5,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 public class ZstdParquetOhlcStore extends ParquetOhlcStore {
 
     public ZstdParquetOhlcStore() {
-        super(CompressionCodecName.ZSTD, "Parquet+ZSTD");
+        super(CompressionCodecName.ZSTD, StoreType.PARQUET_ZSTD);
     }
 }

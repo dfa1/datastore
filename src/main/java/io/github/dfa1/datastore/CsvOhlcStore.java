@@ -14,9 +14,7 @@ import java.util.stream.Stream;
 public class CsvOhlcStore implements OhlcStore {
 
     @Override
-    public String format() {
-        return "CSV";
-    }
+    public StoreType storeType() { return StoreType.CSV; }
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {

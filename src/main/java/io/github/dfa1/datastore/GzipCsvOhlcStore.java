@@ -22,9 +22,7 @@ import java.util.zip.GZIPOutputStream;
 public class GzipCsvOhlcStore implements OhlcStore {
 
     @Override
-    public String format() {
-        return "CSV+GZIP";
-    }
+    public StoreType storeType() { return StoreType.CSV_GZIP; }
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {

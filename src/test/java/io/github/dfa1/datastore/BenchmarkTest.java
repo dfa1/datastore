@@ -44,13 +44,13 @@ class BenchmarkTest {
     }
 
     private Result write(OhlcStore store, List<OhlcRecord> records, Path dir) {
-        String ext  = store.format().toLowerCase().replace("+", "-");
+        String ext  = store.storeType().label().toLowerCase().replace("+", "-");
         Path   file = dir.resolve("ohlc." + ext);
         try {
             store.write(records.stream(), file);
-            return new Result(store.format(), Files.size(file));
+            return new Result(store.storeType().label(), Files.size(file));
         } catch (Exception e) {
-            throw new RuntimeException("store " + store.format() + " failed", e);
+            throw new RuntimeException("store " + store.storeType().label() + " failed", e);
         }
     }
 

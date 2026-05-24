@@ -26,9 +26,7 @@ public class GzipJsonOhlcStore implements OhlcStore {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     @Override
-    public String format() {
-        return "JSON+GZIP";
-    }
+    public StoreType storeType() { return StoreType.JSON_GZIP; }
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {

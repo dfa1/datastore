@@ -14,6 +14,9 @@ class CsvOhlcStoreTest extends AbstractOhlcStoreTest {
     @Override
     OhlcStore createSut() { return new CsvOhlcStore(); }
 
+    @Override
+    StoreType expectedStoreType() { return StoreType.CSV; }
+
     @Test
     void fileHasHeader(@TempDir Path tmp) throws Exception {
         Path file = tmp.resolve("ohlc.csv");
@@ -29,8 +32,4 @@ class CsvOhlcStoreTest extends AbstractOhlcStoreTest {
         assertEquals(count + 1, Files.lines(file).count()); // +1 for header
     }
 
-    @Test
-    void formatName() {
-        assertEquals("CSV", createSut().format());
-    }
 }

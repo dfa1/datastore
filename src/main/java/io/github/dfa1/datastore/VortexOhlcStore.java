@@ -51,22 +51,20 @@ public class VortexOhlcStore implements OhlcStore {
             Field.notNullable("volume", new ArrowType.Int(64, true))
     ));
 
-    private final String formatName;
+    private final StoreType             type;
     private final HashMap<String, String> options;
 
     public VortexOhlcStore() {
-        this("Vortex", new HashMap<>());
+        this(StoreType.VORTEX, new HashMap<>());
     }
 
-    VortexOhlcStore(String formatName, HashMap<String, String> options) {
-        this.formatName = formatName;
-        this.options    = options;
+    VortexOhlcStore(StoreType type, HashMap<String, String> options) {
+        this.type    = type;
+        this.options = options;
     }
 
     @Override
-    public String format() {
-        return formatName;
-    }
+    public StoreType storeType() { return type; }
 
     private static final int BATCH_SIZE = 65_536;
 

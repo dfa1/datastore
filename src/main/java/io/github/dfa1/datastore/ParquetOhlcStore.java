@@ -34,21 +34,19 @@ public class ParquetOhlcStore implements OhlcStore {
             """);
 
     private final CompressionCodecName codec;
-    private final String               format;
+    private final StoreType            type;
 
     public ParquetOhlcStore() {
-        this(CompressionCodecName.UNCOMPRESSED, "Parquet");
+        this(CompressionCodecName.UNCOMPRESSED, StoreType.PARQUET);
     }
 
-    ParquetOhlcStore(CompressionCodecName codec, String format) {
-        this.codec  = codec;
-        this.format = format;
+    ParquetOhlcStore(CompressionCodecName codec, StoreType type) {
+        this.codec = codec;
+        this.type  = type;
     }
 
     @Override
-    public String format() {
-        return format;
-    }
+    public StoreType storeType() { return type; }
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {

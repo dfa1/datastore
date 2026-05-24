@@ -8,5 +8,5 @@ import java.util.stream.Stream;
 public interface OhlcStore {
     void write(Stream<OhlcRecord> records, Path path) throws IOException;
     List<OhlcRecord> read(Path path) throws IOException;
-    String format();
+    StoreType storeType();
 }

@@ -16,6 +16,9 @@ class JsonOhlcStoreTest extends AbstractOhlcStoreTest {
     @Override
     OhlcStore createSut() { return new JsonOhlcStore(); }
 
+    @Override
+    StoreType expectedStoreType() { return StoreType.JSON; }
+
     @Test
     void oneJsonObjectPerLine(@TempDir Path tmp) throws Exception {
         Path file = tmp.resolve("ohlc.ndjson");
@@ -35,8 +38,4 @@ class JsonOhlcStoreTest extends AbstractOhlcStoreTest {
         assertTrue(line.contains("\"date\":\""), "date not ISO string in: " + line);
     }
 
-    @Test
-    void formatName() {
-        assertEquals("JSON", createSut().format());
-    }
 }

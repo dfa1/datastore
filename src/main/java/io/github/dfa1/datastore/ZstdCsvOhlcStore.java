@@ -22,9 +22,7 @@ import java.util.stream.Stream;
 public class ZstdCsvOhlcStore implements OhlcStore {
 
     @Override
-    public String format() {
-        return "CSV+ZSTD";
-    }
+    public StoreType storeType() { return StoreType.CSV_ZSTD; }
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {

@@ -17,9 +17,7 @@ public class JsonOhlcStore implements OhlcStore {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     @Override
-    public String format() {
-        return "JSON";
-    }
+    public StoreType storeType() { return StoreType.JSON; }
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {
