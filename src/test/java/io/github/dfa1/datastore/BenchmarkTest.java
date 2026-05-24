@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.LongSummaryStatistics;
+import java.util.stream.LongStream;
 
 class BenchmarkTest {
 
@@ -25,7 +27,11 @@ class BenchmarkTest {
             new VortexOhlcStore()
     );
 
-    private record Result(String format, long bytes, long writeMs, long readMs) {}
+    private static final int WARMUP_RUNS      = 2;
+    private static final int MEASUREMENT_RUNS = 10;
+
+    private record Stats(long avg, long min, long max) {}
+    private record Result(String format, long bytes, Stats write, Stats read) {}
 
     @Test
     void storageComparison(@TempDir Path tmp) throws Exception {
@@ -47,25 +53,40 @@ class BenchmarkTest {
         String ext  = store.storeType().label().toLowerCase().replace("+", "-");
         Path   file = dir.resolve("ohlc." + ext);
         try {
-            long t0 = System.currentTimeMillis();
-            store.write(records.stream(), file);
-            long writeMs = System.currentTimeMillis() - t0;
+            for (int i = 0; i < WARMUP_RUNS; i++) {
+                store.write(records.stream(), file);
+                store.read(file);
+            }
 
-            long t1 = System.currentTimeMillis();
-            store.read(file);
-            long readMs = System.currentTimeMillis() - t1;
+            long[] writeSamples = new long[MEASUREMENT_RUNS];
+            long[] readSamples  = new long[MEASUREMENT_RUNS];
+            for (int i = 0; i < MEASUREMENT_RUNS; i++) {
+                long t0 = System.nanoTime();
+                store.write(records.stream(), file);
+                writeSamples[i] = (System.nanoTime() - t0) / 1_000_000;
 
-            return new Result(store.storeType().label(), Files.size(file), writeMs, readMs);
+                long t1 = System.nanoTime();
+                store.read(file);
+                readSamples[i] = (System.nanoTime() - t1) / 1_000_000;
+            }
+
+            return new Result(store.storeType().label(), Files.size(file),
+                    stats(writeSamples), stats(readSamples));
         } catch (Exception e) {
             throw new RuntimeException("store " + store.storeType().label() + " failed", e);
         }
     }
 
+    private static Stats stats(long[] samples) {
+        LongSummaryStatistics s = LongStream.of(samples).summaryStatistics();
+        return new Stats((long) s.getAverage(), s.getMin(), s.getMax());
+    }
+
     private void printTable(int scale, List<Result> results) {
         long baseline = results.getFirst().bytes(); // CSV is baseline
 
-        String header = "%-14s  %12s  %8s  %9s  %8s".formatted(
-                "Format", "Size (bytes)", "vs CSV", "Write ms", "Read ms");
+        String header = "%-14s  %12s  %8s  %22s  %22s".formatted(
+                "Format", "Size (bytes)", "vs CSV", "Write ms (avg/min/max)", "Read ms (avg/min/max)");
         String sep   = "-".repeat(header.length());
         String label = scale == 2_520 ? "10y" : scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
 
@@ -75,8 +96,10 @@ class BenchmarkTest {
         System.out.println(sep);
 
         results.forEach(r -> System.out.printf(
-                "%-14s  %,12d  %7.1fx  %9d  %8d%n",
-                r.format(), r.bytes(), (double) r.bytes() / baseline, r.writeMs(), r.readMs()
+                "%-14s  %,12d  %7.1fx  %6d / %4d / %4d    %6d / %4d / %4d%n",
+                r.format(), r.bytes(), (double) r.bytes() / baseline,
+                r.write().avg(), r.write().min(), r.write().max(),
+                r.read().avg(),  r.read().min(),  r.read().max()
         ));
 
         System.out.println(sep);
