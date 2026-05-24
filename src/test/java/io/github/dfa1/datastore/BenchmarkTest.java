@@ -18,7 +18,10 @@ class BenchmarkTest {
             new JsonOhlcStore(),
             new GzipJsonOhlcStore(),
             new ParquetOhlcStore(),
-            new GzipParquetOhlcStore()
+            new GzipParquetOhlcStore(),
+            new ZstdCsvOhlcStore(),
+            new ZstdJsonOhlcStore(),
+            new ZstdParquetOhlcStore()
     );
 
     private record Result(String format, long bytes) {}
