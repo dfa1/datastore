@@ -129,8 +129,8 @@ class BenchmarkTest {
 
         System.out.println(sep);
 
-        String colHeader = "%-14s  %36s  %36s  %7s".formatted(
-                "Format", "Full read ms (avg/min/max)", "Col read ms (avg/min/max)", "speedup");
+        String colHeader = "%-14s  %36s  %7s  %36s  %7s".formatted(
+                "Format", "Full read ms (avg/min/max)", "speedup", "Col read ms (avg/min/max)", "speedup");
         String colSep = "-".repeat(colHeader.length());
         System.out.println();
         System.out.println("  readColumn(CLOSE):");
@@ -140,12 +140,14 @@ class BenchmarkTest {
         results.forEach(r -> {
             long readNs    = r.read().avg().toNanos();
             long colReadNs = r.colRead().avg().toNanos();
-            double speedup = readNs == 0 ? Double.NaN : (double) readNs / Math.max(1, colReadNs);
-            System.out.printf("%-14s  %8.2f / %7.2f / %7.2f      %8.2f / %7.2f / %7.2f   %5.1fx%n",
+            double readSpeedup = csvReadNs == 0 ? Double.NaN : (double) csvReadNs / Math.max(1, readNs);
+            double colSpeedup  = readNs == 0    ? Double.NaN : (double) readNs    / Math.max(1, colReadNs);
+            System.out.printf("%-14s  %8.2f / %7.2f / %7.2f   %5.1fx  %8.2f / %7.2f / %7.2f   %5.1fx%n",
                     r.type().label(),
                     ms(r.read().avg()),    ms(r.read().min()),    ms(r.read().max()),
+                    readSpeedup,
                     ms(r.colRead().avg()), ms(r.colRead().min()), ms(r.colRead().max()),
-                    speedup);
+                    colSpeedup);
         });
         System.out.println(colSep);
         System.out.println();
