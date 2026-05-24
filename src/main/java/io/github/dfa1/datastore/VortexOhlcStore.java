@@ -75,8 +75,7 @@ public class VortexOhlcStore implements OhlcStore {
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {
         Session session = Session.create();
-        String uri = path.toAbsolutePath().toUri().toString();
-
+        String  uri     = path.toAbsolutePath().toUri().toString();
         try (VortexWriter writer = VortexWriter.create(session, uri, SCHEMA, options, allocator)) {
             var batch = new ArrayList<OhlcRecord>(BATCH_SIZE);
             var it    = records.iterator();
@@ -135,13 +134,11 @@ public class VortexOhlcStore implements OhlcStore {
 
     @Override
     public List<OhlcRecord> read(Path path) throws IOException {
-        Session session = Session.create();
         String uri = path.toAbsolutePath().toUri().toString();
 
         var result = new ArrayList<OhlcRecord>();
-        DataSource ds = DataSource.open(session, uri);
+        DataSource ds = DataSource.open(Session.create(), uri);
         Scan scan = ds.scan(ScanOptions.of());
-
         while (scan.hasNext()) {
             Partition partition = scan.next();
             try (ArrowReader reader = partition.scanArrow(allocator)) {
@@ -154,16 +151,12 @@ public class VortexOhlcStore implements OhlcStore {
                     Float8Vector  lowVec    = (Float8Vector)  root.getVector("low");
                     Float8Vector  closeVec  = (Float8Vector)  root.getVector("close");
                     BigIntVector  volumeVec = (BigIntVector)  root.getVector("volume");
-
                     for (int i = 0; i < root.getRowCount(); i++) {
                         result.add(new OhlcRecord(
                                 LocalDate.ofEpochDay(dateVec.get(i)),
                                 new Symbol(new String(symbolVec.get(i), StandardCharsets.UTF_8)),
-                                openVec.get(i),
-                                highVec.get(i),
-                                lowVec.get(i),
-                                closeVec.get(i),
-                                volumeVec.get(i)
+                                openVec.get(i), highVec.get(i), lowVec.get(i),
+                                closeVec.get(i), volumeVec.get(i)
                         ));
                     }
                 }
@@ -174,15 +167,14 @@ public class VortexOhlcStore implements OhlcStore {
 
     @Override
     public double[] readColumn(Path path, NumericColumn column) throws IOException {
-        Session session = Session.create();
         String uri = path.toAbsolutePath().toUri().toString();
         ScanOptions opts = ScanOptions.builder()
                 .projection(Expression.select(new String[]{column.fieldName()}, Expression.root()))
                 .build();
 
         var values = new ArrayList<Double>();
-        DataSource ds = DataSource.open(session, uri);
-        Scan scan = ds.scan(opts);
+        DataSource ds   = DataSource.open(Session.create(), uri);
+        Scan       scan = ds.scan(opts);
         while (scan.hasNext()) {
             Partition partition = scan.next();
             try (ArrowReader reader = partition.scanArrow(allocator)) {
