@@ -16,7 +16,7 @@ import java.util.List;
 
 public class ParquetOhlcStore implements OhlcStore {
 
-    private static final Schema SCHEMA = new Schema.Parser().parse("""
+    static final Schema SCHEMA = new Schema.Parser().parse("""
             {
               "type": "record",
               "name": "OhlcRecord",
@@ -33,16 +33,28 @@ public class ParquetOhlcStore implements OhlcStore {
             }
             """);
 
+    private final CompressionCodecName codec;
+    private final String               format;
+
+    public ParquetOhlcStore() {
+        this(CompressionCodecName.UNCOMPRESSED, "Parquet");
+    }
+
+    ParquetOhlcStore(CompressionCodecName codec, String format) {
+        this.codec  = codec;
+        this.format = format;
+    }
+
     @Override
     public String format() {
-        return "Parquet";
+        return format;
     }
 
     @Override
     public void write(List<OhlcRecord> records, Path path) throws IOException {
         try (var writer = AvroParquetWriter.<GenericRecord>builder(new NioOutputFile(path))
                 .withSchema(SCHEMA)
-                .withCompressionCodec(CompressionCodecName.UNCOMPRESSED)
+                .withCompressionCodec(codec)
                 .build()) {
             for (var r : records) {
                 var rec = new GenericData.Record(SCHEMA);
