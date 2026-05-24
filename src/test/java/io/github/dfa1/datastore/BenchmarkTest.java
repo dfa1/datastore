@@ -21,7 +21,10 @@ class BenchmarkTest {
             new GzipParquetOhlcStore(),
             new ZstdCsvOhlcStore(),
             new ZstdJsonOhlcStore(),
-            new ZstdParquetOhlcStore()
+            new ZstdParquetOhlcStore(),
+            new TypedParquetOhlcStore(),
+            new GzipTypedParquetOhlcStore(),
+            new ZstdTypedParquetOhlcStore()
     );
 
     private record Result(String format, long bytes) {}
