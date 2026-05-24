@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -30,11 +31,12 @@ public class GzipJsonOhlcStore implements OhlcStore {
     }
 
     @Override
-    public void write(List<OhlcRecord> records, Path path) throws IOException {
+    public void write(Stream<OhlcRecord> records, Path path) throws IOException {
         try (var gzip = new GZIPOutputStream(new BufferedOutputStream(Files.newOutputStream(path)));
              var out  = new BufferedWriter(new OutputStreamWriter(gzip, StandardCharsets.UTF_8))) {
-            for (var r : records) {
-                out.write(MAPPER.writeValueAsString(r));
+            var it = records.iterator();
+            while (it.hasNext()) {
+                out.write(MAPPER.writeValueAsString(it.next()));
                 out.newLine();
             }
         }

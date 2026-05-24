@@ -17,10 +17,10 @@ class JsonOhlcStoreTest {
     @Test
     void roundTrip(@TempDir Path tmp) throws Exception {
         var records = new OhlcGenerator("ACME", LocalDate.of(2020, 1, 1), 100.0, 42L)
-                .generate(1_000);
+                .stream(1_000).toList();
         Path file = tmp.resolve("ohlc.ndjson");
 
-        STORE.write(records, file);
+        STORE.write(records.stream(), file);
         List<OhlcRecord> loaded = STORE.read(file);
 
         assertEquals(records, loaded);
@@ -28,10 +28,8 @@ class JsonOhlcStoreTest {
 
     @Test
     void oneJsonObjectPerLine(@TempDir Path tmp) throws Exception {
-        var records = new OhlcGenerator("X", LocalDate.of(2024, 1, 2), 50.0, 1L)
-                .generate(10);
         Path file = tmp.resolve("ohlc.ndjson");
-        STORE.write(records, file);
+        STORE.write(new OhlcGenerator("X", LocalDate.of(2024, 1, 2), 50.0, 1L).stream(10), file);
 
         List<String> lines = Files.readAllLines(file);
         assertEquals(10, lines.size());
@@ -42,10 +40,8 @@ class JsonOhlcStoreTest {
 
     @Test
     void dateSerializedAsIsoString(@TempDir Path tmp) throws Exception {
-        var records = new OhlcGenerator("Y", LocalDate.of(2024, 3, 15), 200.0, 7L)
-                .generate(1);
         Path file = tmp.resolve("ohlc.ndjson");
-        STORE.write(records, file);
+        STORE.write(new OhlcGenerator("Y", LocalDate.of(2024, 3, 15), 200.0, 7L).stream(1), file);
 
         String line = Files.readAllLines(file).getFirst();
         assertTrue(line.contains("\"date\":\"2024-03-17\"") || line.contains("\"date\":\""), // skip weekends

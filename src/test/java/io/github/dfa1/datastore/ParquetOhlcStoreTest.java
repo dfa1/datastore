@@ -16,10 +16,10 @@ class ParquetOhlcStoreTest {
     @Test
     void roundTrip(@TempDir Path tmp) throws Exception {
         var records = new OhlcGenerator("ACME", LocalDate.of(2020, 1, 1), 100.0, 42L)
-                .generate(1_000);
+                .stream(1_000).toList();
         Path file = tmp.resolve("ohlc.parquet");
 
-        STORE.write(records, file);
+        STORE.write(records.stream(), file);
         List<OhlcRecord> loaded = STORE.read(file);
 
         assertEquals(records, loaded);

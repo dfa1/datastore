@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class CsvOhlcStore implements OhlcStore {
 
@@ -18,10 +19,12 @@ public class CsvOhlcStore implements OhlcStore {
     }
 
     @Override
-    public void write(List<OhlcRecord> records, Path path) throws IOException {
+    public void write(Stream<OhlcRecord> records, Path path) throws IOException {
         try (var writer = CsvWriter.builder().build(path)) {
             writer.writeRecord("date", "symbol", "open", "high", "low", "close", "volume");
-            for (var r : records) {
+            var it = records.iterator();
+            while (it.hasNext()) {
+                var r = it.next();
                 writer.writeRecord(
                         r.date().toString(),
                         r.symbol(),

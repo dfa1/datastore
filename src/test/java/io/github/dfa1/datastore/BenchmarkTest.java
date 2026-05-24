@@ -32,8 +32,8 @@ class BenchmarkTest {
         System.out.println();
 
         for (int scale : SCALES) {
-            var records = new OhlcGenerator("ACME", LocalDate.of(2023, 1, 2), 100.0, 42L)
-                    .generate(scale);
+            List<OhlcRecord> records = new OhlcGenerator("ACME", LocalDate.of(2023, 1, 2), 100.0, 42L)
+                    .stream(scale).toList();
 
             var results = STORES.stream()
                     .map(store -> write(store, records, tmp))
@@ -47,7 +47,7 @@ class BenchmarkTest {
         String ext  = store.format().toLowerCase().replace("+", "-");
         Path   file = dir.resolve("ohlc." + ext);
         try {
-            store.write(records, file);
+            store.write(records.stream(), file);
             return new Result(store.format(), Files.size(file));
         } catch (Exception e) {
             throw new RuntimeException("store " + store.format() + " failed", e);

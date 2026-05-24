@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 
-/** One JSON object per line (NDJSON). */
 public class JsonOhlcStore implements OhlcStore {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
@@ -22,10 +22,11 @@ public class JsonOhlcStore implements OhlcStore {
     }
 
     @Override
-    public void write(List<OhlcRecord> records, Path path) throws IOException {
+    public void write(Stream<OhlcRecord> records, Path path) throws IOException {
         try (var out = Files.newBufferedWriter(path)) {
-            for (var r : records) {
-                out.write(MAPPER.writeValueAsString(r));
+            var it = records.iterator();
+            while (it.hasNext()) {
+                out.write(MAPPER.writeValueAsString(it.next()));
                 out.newLine();
             }
         }
