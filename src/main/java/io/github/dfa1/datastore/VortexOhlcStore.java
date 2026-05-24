@@ -14,17 +14,17 @@ import org.apache.arrow.c.Data;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.DateDayVector;
-import org.apache.arrow.vector.DecimalVector;
+import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowReader;
 import org.apache.arrow.vector.types.DateUnit;
+import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -39,13 +39,15 @@ public class VortexOhlcStore implements OhlcStore {
         NativeLoader.loadJni();
     }
 
+    private static final ArrowType F64 = new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
+
     private static final Schema SCHEMA = new Schema(List.of(
             Field.notNullable("date",   new ArrowType.Date(DateUnit.DAY)),
             Field.notNullable("symbol", ArrowType.Utf8.INSTANCE),
-            Field.notNullable("open",   new ArrowType.Decimal(9, 2, 128)),
-            Field.notNullable("high",   new ArrowType.Decimal(9, 2, 128)),
-            Field.notNullable("low",    new ArrowType.Decimal(9, 2, 128)),
-            Field.notNullable("close",  new ArrowType.Decimal(9, 2, 128)),
+            Field.notNullable("open",   F64),
+            Field.notNullable("high",   F64),
+            Field.notNullable("low",    F64),
+            Field.notNullable("close",  F64),
             Field.notNullable("volume", new ArrowType.Int(64, true))
     ));
 
@@ -93,13 +95,13 @@ public class VortexOhlcStore implements OhlcStore {
     private static void flush(VortexWriter writer, List<OhlcRecord> batch,
                               BufferAllocator allocator) throws IOException {
         try (VectorSchemaRoot root = VectorSchemaRoot.create(SCHEMA, allocator)) {
-            DateDayVector  dateVec   = (DateDayVector)  root.getVector("date");
-            VarCharVector  symbolVec = (VarCharVector)  root.getVector("symbol");
-            DecimalVector  openVec   = (DecimalVector)  root.getVector("open");
-            DecimalVector  highVec   = (DecimalVector)  root.getVector("high");
-            DecimalVector  lowVec    = (DecimalVector)  root.getVector("low");
-            DecimalVector  closeVec  = (DecimalVector)  root.getVector("close");
-            BigIntVector   volumeVec = (BigIntVector)   root.getVector("volume");
+            DateDayVector dateVec   = (DateDayVector) root.getVector("date");
+            VarCharVector symbolVec = (VarCharVector) root.getVector("symbol");
+            Float8Vector  openVec   = (Float8Vector)  root.getVector("open");
+            Float8Vector  highVec   = (Float8Vector)  root.getVector("high");
+            Float8Vector  lowVec    = (Float8Vector)  root.getVector("low");
+            Float8Vector  closeVec  = (Float8Vector)  root.getVector("close");
+            BigIntVector  volumeVec = (BigIntVector)  root.getVector("volume");
 
             int n = batch.size();
             dateVec.allocateNew(n);
@@ -114,10 +116,10 @@ public class VortexOhlcStore implements OhlcStore {
                 var r = batch.get(i);
                 dateVec.setSafe(i,   (int) r.date().toEpochDay());
                 symbolVec.setSafe(i, r.symbol().getBytes(StandardCharsets.UTF_8));
-                openVec.setSafe(i,   BigDecimal.valueOf(Math.round(r.open()  * 100), 2));
-                highVec.setSafe(i,   BigDecimal.valueOf(Math.round(r.high()  * 100), 2));
-                lowVec.setSafe(i,    BigDecimal.valueOf(Math.round(r.low()   * 100), 2));
-                closeVec.setSafe(i,  BigDecimal.valueOf(Math.round(r.close() * 100), 2));
+                openVec.setSafe(i,   r.open());
+                highVec.setSafe(i,   r.high());
+                lowVec.setSafe(i,    r.low());
+                closeVec.setSafe(i,  r.close());
                 volumeVec.setSafe(i, r.volume());
             }
 
@@ -145,22 +147,22 @@ public class VortexOhlcStore implements OhlcStore {
             try (ArrowReader reader = partition.scanArrow(allocator)) {
                 while (reader.loadNextBatch()) {
                     VectorSchemaRoot root = reader.getVectorSchemaRoot();
-                    DateDayVector  dateVec   = (DateDayVector)  root.getVector("date");
-                    VarCharVector  symbolVec = (VarCharVector)  root.getVector("symbol");
-                    DecimalVector  openVec   = (DecimalVector)  root.getVector("open");
-                    DecimalVector  highVec   = (DecimalVector)  root.getVector("high");
-                    DecimalVector  lowVec    = (DecimalVector)  root.getVector("low");
-                    DecimalVector  closeVec  = (DecimalVector)  root.getVector("close");
-                    BigIntVector   volumeVec = (BigIntVector)   root.getVector("volume");
+                    DateDayVector dateVec   = (DateDayVector) root.getVector("date");
+                    VarCharVector symbolVec = (VarCharVector) root.getVector("symbol");
+                    Float8Vector  openVec   = (Float8Vector)  root.getVector("open");
+                    Float8Vector  highVec   = (Float8Vector)  root.getVector("high");
+                    Float8Vector  lowVec    = (Float8Vector)  root.getVector("low");
+                    Float8Vector  closeVec  = (Float8Vector)  root.getVector("close");
+                    BigIntVector  volumeVec = (BigIntVector)  root.getVector("volume");
 
                     for (int i = 0; i < root.getRowCount(); i++) {
                         result.add(new OhlcRecord(
                                 LocalDate.ofEpochDay(dateVec.get(i)),
                                 new String(symbolVec.get(i), StandardCharsets.UTF_8),
-                                openVec.getObject(i).doubleValue(),
-                                highVec.getObject(i).doubleValue(),
-                                lowVec.getObject(i).doubleValue(),
-                                closeVec.getObject(i).doubleValue(),
+                                openVec.get(i),
+                                highVec.get(i),
+                                lowVec.get(i),
+                                closeVec.get(i),
                                 volumeVec.get(i)
                         ));
                     }
