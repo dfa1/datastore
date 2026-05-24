@@ -10,7 +10,7 @@ import java.util.List;
 
 class BenchmarkTest {
 
-    private static final List<Integer> SCALES = List.of(252, 10_000, 100_000);
+    private static final List<Integer> SCALES = List.of(252, 2_520, 10_000, 100_000);
 
     private static final List<OhlcStore> STORES = List.of(
             new CsvOhlcStore(),
@@ -54,7 +54,7 @@ class BenchmarkTest {
 
         String header = "%-12s  %12s  %8s".formatted("Format", "Size (bytes)", "vs CSV");
         String sep    = "-".repeat(header.length());
-        String label  = scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
+        String label  = scale == 2_520 ? "10y" : scale >= 1_000 ? (scale / 1_000) + "k" : String.valueOf(scale);
 
         System.out.println("=== " + scale + " records (" + label + ") ===");
         System.out.println(sep);
