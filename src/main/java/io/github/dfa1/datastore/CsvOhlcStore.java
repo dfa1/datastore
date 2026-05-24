@@ -1,57 +1,58 @@
 package io.github.dfa1.datastore;
 
-import de.siegmar.fastcsv.reader.CsvReader;
-import de.siegmar.fastcsv.reader.NamedCsvRecord;
-import de.siegmar.fastcsv.writer.CsvWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 public class CsvOhlcStore implements OhlcStore {
+
+    static final CsvMapper MAPPER;
+    static final CsvSchema SCHEMA;
+
+    static {
+        MAPPER = new CsvMapper();
+        MAPPER.registerModule(new JavaTimeModule());
+        MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        SCHEMA = CsvSchema.builder()
+                .addColumn("date")
+                .addColumn("symbol")
+                .addNumberColumn("open")
+                .addNumberColumn("high")
+                .addNumberColumn("low")
+                .addNumberColumn("close")
+                .addNumberColumn("volume")
+                .setUseHeader(true)
+                .build();
+    }
 
     @Override
     public StoreType storeType() { return StoreType.CSV; }
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {
-        try (var writer = CsvWriter.builder().build(path)) {
-            writer.writeRecord("date", "symbol", "open", "high", "low", "close", "volume");
+        try (var out = Files.newBufferedWriter(path, StandardCharsets.UTF_8);
+             var sw  = MAPPER.writer(SCHEMA).writeValues(out)) {
             var it = records.iterator();
-            while (it.hasNext()) {
-                var r = it.next();
-                writer.writeRecord(
-                        r.date().toString(),
-                        r.symbol(),
-                        Double.toString(r.open()),
-                        Double.toString(r.high()),
-                        Double.toString(r.low()),
-                        Double.toString(r.close()),
-                        Long.toString(r.volume())
-                );
-            }
+            while (it.hasNext()) sw.write(it.next());
         }
     }
 
     @Override
     public List<OhlcRecord> read(Path path) throws IOException {
-        var records = new ArrayList<OhlcRecord>();
-        try (var reader = CsvReader.builder().ofNamedCsvRecord(path)) {
-            for (NamedCsvRecord row : reader) {
-                records.add(new OhlcRecord(
-                        LocalDate.parse(row.getField("date")),
-                        row.getField("symbol"),
-                        Double.parseDouble(row.getField("open")),
-                        Double.parseDouble(row.getField("high")),
-                        Double.parseDouble(row.getField("low")),
-                        Double.parseDouble(row.getField("close")),
-                        Long.parseLong(row.getField("volume"))
-                ));
-            }
+        try (var in = Files.newBufferedReader(path, StandardCharsets.UTF_8);
+             var it = MAPPER.readerFor(OhlcRecord.class)
+                            .with(SCHEMA)
+                            .<OhlcRecord>readValues(in)) {
+            return it.readAll();
         }
-        return records;
     }
 }
