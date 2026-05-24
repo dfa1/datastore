@@ -1,9 +1,5 @@
 package io.github.dfa1.datastore;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -21,10 +17,6 @@ import java.util.zip.GZIPOutputStream;
 
 public class GzipJsonOhlcStore implements OhlcStore {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
     @Override
     public StoreType storeType() { return StoreType.JSON_GZIP; }
 
@@ -34,7 +26,7 @@ public class GzipJsonOhlcStore implements OhlcStore {
              var out  = new BufferedWriter(new OutputStreamWriter(gzip, StandardCharsets.UTF_8))) {
             var it = records.iterator();
             while (it.hasNext()) {
-                out.write(MAPPER.writeValueAsString(it.next()));
+                out.write(JsonOhlcStore.MAPPER.writeValueAsString(it.next()));
                 out.newLine();
             }
         }
@@ -44,7 +36,7 @@ public class GzipJsonOhlcStore implements OhlcStore {
     public List<OhlcRecord> read(Path path) throws IOException {
         try (var gzip = new GZIPInputStream(new BufferedInputStream(Files.newInputStream(path)));
              var in   = new BufferedReader(new InputStreamReader(gzip, StandardCharsets.UTF_8))) {
-            return MAPPER.readerFor(OhlcRecord.class)
+            return JsonOhlcStore.MAPPER.readerFor(OhlcRecord.class)
                     .<OhlcRecord>readValues(in)
                     .readAll();
         }

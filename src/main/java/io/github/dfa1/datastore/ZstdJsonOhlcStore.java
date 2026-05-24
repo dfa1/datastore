@@ -1,8 +1,5 @@
 package io.github.dfa1.datastore;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.luben.zstd.ZstdInputStream;
 import com.github.luben.zstd.ZstdOutputStream;
 
@@ -21,10 +18,6 @@ import java.util.stream.Stream;
 
 public class ZstdJsonOhlcStore implements OhlcStore {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
     @Override
     public StoreType storeType() { return StoreType.JSON_ZSTD; }
 
@@ -34,7 +27,7 @@ public class ZstdJsonOhlcStore implements OhlcStore {
              var out  = new BufferedWriter(new OutputStreamWriter(zstd, StandardCharsets.UTF_8))) {
             var it = records.iterator();
             while (it.hasNext()) {
-                out.write(MAPPER.writeValueAsString(it.next()));
+                out.write(JsonOhlcStore.MAPPER.writeValueAsString(it.next()));
                 out.newLine();
             }
         }
@@ -44,7 +37,7 @@ public class ZstdJsonOhlcStore implements OhlcStore {
     public List<OhlcRecord> read(Path path) throws IOException {
         try (var zstd = new ZstdInputStream(new BufferedInputStream(Files.newInputStream(path)));
              var in   = new BufferedReader(new InputStreamReader(zstd, StandardCharsets.UTF_8))) {
-            return MAPPER.readerFor(OhlcRecord.class)
+            return JsonOhlcStore.MAPPER.readerFor(OhlcRecord.class)
                     .<OhlcRecord>readValues(in)
                     .readAll();
         }

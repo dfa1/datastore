@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.stream.Stream;
 
 public class JsonOhlcStore implements OhlcStore {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
+    static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
@@ -21,7 +22,7 @@ public class JsonOhlcStore implements OhlcStore {
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {
-        try (var out = Files.newBufferedWriter(path)) {
+        try (var out = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             var it = records.iterator();
             while (it.hasNext()) {
                 out.write(MAPPER.writeValueAsString(it.next()));
@@ -32,7 +33,7 @@ public class JsonOhlcStore implements OhlcStore {
 
     @Override
     public List<OhlcRecord> read(Path path) throws IOException {
-        try (var in = Files.newBufferedReader(path)) {
+        try (var in = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return MAPPER.readerFor(OhlcRecord.class)
                     .<OhlcRecord>readValues(in)
                     .readAll();
