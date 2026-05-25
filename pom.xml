@@ -80,7 +80,7 @@
         <!-- Parquet -->
         <dependency>
             <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-avro</artifactId>
+            <artifactId>parquet-hadoop</artifactId>
             <version>${parquet.version}</version>
         </dependency>
         <dependency>
