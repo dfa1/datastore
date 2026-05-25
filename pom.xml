@@ -132,6 +132,7 @@
                 <version>3.5.2</version>
                 <configuration>
                     <argLine>--add-opens java.base/java.nio=ALL-UNNAMED --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow</argLine>
+                    <excludedGroups>diag</excludedGroups>
                 </configuration>
             </plugin>
         </plugins>

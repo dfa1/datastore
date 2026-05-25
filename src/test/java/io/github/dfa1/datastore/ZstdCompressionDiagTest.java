@@ -2,6 +2,7 @@ package io.github.dfa1.datastore;
 
 import com.github.luben.zstd.Zstd;
 import com.github.luben.zstd.ZstdOutputStream;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 
+@Tag("diag")
 class ZstdCompressionDiagTest {
 
     @Test

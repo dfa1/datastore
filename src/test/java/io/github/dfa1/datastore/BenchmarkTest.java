@@ -1,5 +1,6 @@
 package io.github.dfa1.datastore;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.stream.LongStream;
 
+@Tag("diag")
 class BenchmarkTest {
 
     private static final int TRADING_DAYS_PER_YEAR = 252;

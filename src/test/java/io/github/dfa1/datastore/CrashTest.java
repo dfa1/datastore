@@ -2,6 +2,7 @@ package io.github.dfa1.datastore;
 
 import dev.vortex.api.Partition;
 import dev.vortex.api.Session;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 class CrashTest {
 
 	@Test
+	@Disabled("infinite loop — manual reproducer for vortex-data/vortex#8075 only")
 	void reproducer(@TempDir Path dir) throws IOException {
 		VortexOhlcStore store = new VortexOhlcStore();
 		int i = 0;
