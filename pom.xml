@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- dependency versions -->
-        <parquet.version>1.15.0</parquet.version>
+        <parquet.version>1.15.2</parquet.version>
         <hadoop.version>3.4.1</hadoop.version>
         <jackson.version>2.21.3</jackson.version>
         <zstd.version>1.5.6-3</zstd.version>
