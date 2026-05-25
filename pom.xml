@@ -21,7 +21,7 @@
         <!-- dependency versions -->
         <parquet.version>1.15.0</parquet.version>
         <hadoop.version>3.4.1</hadoop.version>
-        <jackson.version>2.18.3</jackson.version>
+        <jackson.version>2.18.4</jackson.version>
         <zstd.version>1.5.6-3</zstd.version>
         <arrow.version>19.0.0</arrow.version>
         <vortex.version>0.72.0</vortex.version>
