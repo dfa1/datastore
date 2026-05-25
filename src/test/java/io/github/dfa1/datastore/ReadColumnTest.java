@@ -36,6 +36,7 @@ class ReadColumnTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("stores")
     void readColumnMatchesFullRead(OhlcStore store) throws Exception {
+        // Given
         List<OhlcRecord> records = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2020, 1, 1), 100.0, 42L)
                 .stream(500).toList();
         Path file = tmp.resolve("ohlc." + store.storeType().name().toLowerCase());
@@ -43,7 +44,11 @@ class ReadColumnTest {
 
         for (NumericColumn col : NumericColumn.values()) {
             double[] expected = records.stream().mapToDouble(col::extract).toArray();
-            double[] actual   = store.readColumn(file, col);
+
+            // When
+            double[] actual = store.readColumn(file, col);
+
+            // Then
             assertEquals(expected.length, actual.length, store.storeType() + " / " + col + ": length");
             assertArrayEquals(expected, actual, 1e-9, store.storeType() + " / " + col + ": values");
         }

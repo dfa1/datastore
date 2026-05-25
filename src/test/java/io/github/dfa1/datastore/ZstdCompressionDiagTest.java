@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,6 +17,7 @@ class ZstdCompressionDiagTest {
 
     @Test
     void compareZstdApproaches(@TempDir Path tmp) throws Exception {
+        // Given
         List<OhlcRecord> records = new OhlcGenerator(new Symbol("ACME"), LocalDate.of(2020, 1, 1), 100.0, 42L)
                 .stream(10_000).toList();
 
@@ -29,7 +29,6 @@ class ZstdCompressionDiagTest {
         new CsvOhlcStore().write(records.stream(), csv);
         new ZstdCsvOhlcStore().write(records.stream(), zst1);
 
-        // with level 9
         try (var zstd = new ZstdOutputStream(new BufferedOutputStream(Files.newOutputStream(zst2)), 9);
              var out  = new OutputStreamWriter(zstd, StandardCharsets.UTF_8);
              var sw   = CsvOhlcStore.MAPPER.writer(CsvOhlcStore.SCHEMA).writeValues(out)) {
@@ -37,9 +36,13 @@ class ZstdCompressionDiagTest {
             while (it.hasNext()) sw.write(it.next());
         }
 
-        byte[] compressed = Zstd.compress(Files.readAllBytes(csv), 3);
+        byte[] rawCsv = Files.readAllBytes(csv);
+
+        // When
+        byte[] compressed = Zstd.compress(rawCsv, 3);
         Files.write(zst3, compressed);
 
+        // Then (diagnostic output — no assertions, sizes printed for manual comparison)
         long csvSize = Files.size(csv);
         System.out.printf("%nCSV:                   %,d bytes%n", csvSize);
         System.out.printf("ZSTD stream (no buf):  %,d bytes (%.2fx)%n", Files.size(zst1), (double) csvSize / Files.size(zst1));

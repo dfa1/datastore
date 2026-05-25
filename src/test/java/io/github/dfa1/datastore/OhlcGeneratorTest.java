@@ -19,12 +19,26 @@ class OhlcGeneratorTest {
 
     @Test
     void correctCount() {
-        assertEquals(COUNT, gen(42).stream(COUNT).count());
+        // Given
+        OhlcGenerator generator = gen(42);
+
+        // When
+        long result = generator.stream(COUNT).count();
+
+        // Then
+        assertEquals(COUNT, result);
     }
 
     @Test
     void noWeekends() {
-        gen(42).stream(COUNT).forEach(r -> {
+        // Given
+        OhlcGenerator generator = gen(42);
+
+        // When
+        List<OhlcRecord> records = generator.stream(COUNT).toList();
+
+        // Then
+        records.forEach(r -> {
             var day = r.date().getDayOfWeek();
             assertNotEquals(DayOfWeek.SATURDAY, day, "got Saturday: " + r.date());
             assertNotEquals(DayOfWeek.SUNDAY,   day, "got Sunday: "   + r.date());
@@ -33,7 +47,14 @@ class OhlcGeneratorTest {
 
     @Test
     void ohlcInvariants() {
-        gen(42).stream(COUNT).forEach(r -> {
+        // Given
+        OhlcGenerator generator = gen(42);
+
+        // When
+        List<OhlcRecord> records = generator.stream(COUNT).toList();
+
+        // Then
+        records.forEach(r -> {
             assertTrue(r.high() >= r.open(),  "high < open at "  + r.date());
             assertTrue(r.high() >= r.close(), "high < close at " + r.date());
             assertTrue(r.low()  <= r.open(),  "low > open at "   + r.date());
@@ -45,7 +66,13 @@ class OhlcGeneratorTest {
 
     @Test
     void datesAscending() {
-        List<OhlcRecord> records = gen(42).stream(COUNT).toList();
+        // Given
+        OhlcGenerator generator = gen(42);
+
+        // When
+        List<OhlcRecord> records = generator.stream(COUNT).toList();
+
+        // Then
         for (int i = 1; i < records.size(); i++) {
             assertTrue(records.get(i).date().isAfter(records.get(i - 1).date()),
                     "dates not ascending at index " + i);
@@ -54,15 +81,27 @@ class OhlcGeneratorTest {
 
     @Test
     void deterministicWithSameSeed() {
+        // Given
+        // Two generators with the same seed
+
+        // When
         List<OhlcRecord> a = gen(42).stream(COUNT).toList();
         List<OhlcRecord> b = gen(42).stream(COUNT).toList();
+
+        // Then
         assertEquals(a, b);
     }
 
     @Test
     void differentSeedProducesDifferentData() {
+        // Given
+        // Two generators with different seeds
+
+        // When
         List<OhlcRecord> a = gen(42).stream(COUNT).toList();
         List<OhlcRecord> b = gen(99).stream(COUNT).toList();
+
+        // Then
         assertNotEquals(a, b);
     }
 }

@@ -37,3 +37,21 @@ Surefire is pinned to GraalVM JDK 25 (`/Library/Java/JavaVirtualMachines/graalvm
 **Tests:** Every store has a `*OhlcStoreTest` extending `AbstractOhlcStoreTest` (round-trip + storeType checks). `BenchmarkTest` runs 2 warmup + 10 measured iterations across 7 scales (1y–50y trading days). `CrossFormatConsistencyTest` asserts all 10 stores produce identical records for the same input.
 
 **Known issue:** Vortex `Session` has no `close()` API (upstream bug vortex-data/vortex#8075, crashes on JDK 26). Surefire is pinned to JDK 25 as a workaround.
+
+## Testing
+
+1. Write unit tests in JUnit 5 using `@TempDir`.
+2. **Always** follow the `// Given / // When / // Then` structure — every test, no exceptions.
+   - `// Given` sets up state.
+   - `// When` performs the action under test — **never combine with `// Then`**. Extract the result into a local variable:
+     ```java
+     // When
+     var result = store.read(file);
+
+     // Then
+     assertEquals(expected, result);
+     ```
+   - `// Then` asserts the outcome. The assertion always operates on the variable captured in `// When`, never inline.
+   - For void actions (`write`, `flush`, …) there is no return value to capture; just place the call under `// When` and put assertions (if any) under `// Then`.
+   - For tests with no meaningful setup, use `// Given` with a blank line or a comment explaining why there is none.
+3. **Run tests:** `./mvnw test`
