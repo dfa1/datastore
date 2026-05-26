@@ -59,7 +59,7 @@ class BenchmarkTest {
 
     private Result measure(OhlcStore store, List<OhlcRecord> records, Path dir) {
         StoreType type = store.storeType();
-        Path      file = dir.resolve("ohlc." + type.label().toLowerCase().replace("+", "-"));
+        Path      file = dir.resolve("ohlc-" + records.size() + "." + type.label().toLowerCase().replace("+", "-"));
         try {
             for (int i = 0; i < WARMUP_RUNS; i++) {
                 store.write(records.stream(), file);
