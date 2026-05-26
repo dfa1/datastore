@@ -41,7 +41,8 @@ public class VortexOhlcStore implements OhlcStore {
         NativeLoader.loadJni();
     }
 
-    private static final ArrowType F64 = new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
+    private static final Session   SESSION = Session.create();
+    private static final ArrowType F64     = new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
 
     private static final Schema SCHEMA = new Schema(List.of(
             Field.notNullable("date",   new ArrowType.Date(DateUnit.DAY)),
@@ -74,9 +75,8 @@ public class VortexOhlcStore implements OhlcStore {
 
     @Override
     public void write(Stream<OhlcRecord> records, Path path) throws IOException {
-        Session session = Session.create();
-        String  uri     = path.toAbsolutePath().toUri().toString();
-        try (VortexWriter writer = VortexWriter.create(session, uri, SCHEMA, options, allocator)) {
+        String uri = path.toAbsolutePath().toUri().toString();
+        try (VortexWriter writer = VortexWriter.create(SESSION, uri, SCHEMA, options, allocator)) {
             var batch = new ArrayList<OhlcRecord>(BATCH_SIZE);
             var it    = records.iterator();
             while (it.hasNext()) {
@@ -137,7 +137,7 @@ public class VortexOhlcStore implements OhlcStore {
         String uri = path.toAbsolutePath().toUri().toString();
 
         var result = new ArrayList<OhlcRecord>();
-        DataSource ds = DataSource.open(Session.create(), uri);
+        DataSource ds = DataSource.open(SESSION, uri);
         Scan scan = ds.scan(ScanOptions.of());
         while (scan.hasNext()) {
             Partition partition = scan.next();
@@ -173,7 +173,7 @@ public class VortexOhlcStore implements OhlcStore {
                 .build();
 
         var values = new ArrayList<Double>();
-        DataSource ds   = DataSource.open(Session.create(), uri);
+        DataSource ds   = DataSource.open(SESSION, uri);
         Scan       scan = ds.scan(opts);
         while (scan.hasNext()) {
             Partition partition = scan.next();

@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./mvnw test -Dtest=CsvOhlcStoreTest
 
 # run the benchmark (prints tables to stdout) — excluded from default run
-./mvnw test -Dtest=BenchmarkTest -Dgroups=diag
+./mvnw test -Dtest=BenchmarkTest -DexcludedGroups=
 
 # verify cross-format correctness
 ./mvnw test -Dtest=CrossFormatConsistencyTest
