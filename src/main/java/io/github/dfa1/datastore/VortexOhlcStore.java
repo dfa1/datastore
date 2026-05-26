@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.stream.DoubleStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,7 +173,7 @@ public class VortexOhlcStore implements OhlcStore {
                 .projection(Expression.select(new String[]{column.fieldName()}, Expression.root()))
                 .build();
 
-        var values = new ArrayList<Double>();
+        DoubleStream.Builder builder = DoubleStream.builder();
         DataSource ds   = DataSource.open(SESSION, uri);
         Scan       scan = ds.scan(opts);
         while (scan.hasNext()) {
@@ -182,16 +183,14 @@ public class VortexOhlcStore implements OhlcStore {
                     VectorSchemaRoot root = reader.getVectorSchemaRoot();
                     if (column == NumericColumn.VOLUME) {
                         BigIntVector vec = (BigIntVector) root.getVector(column.fieldName());
-                        for (int i = 0; i < root.getRowCount(); i++) values.add((double) vec.get(i));
+                        for (int i = 0; i < root.getRowCount(); i++) builder.accept((double) vec.get(i));
                     } else {
                         Float8Vector vec = (Float8Vector) root.getVector(column.fieldName());
-                        for (int i = 0; i < root.getRowCount(); i++) values.add(vec.get(i));
+                        for (int i = 0; i < root.getRowCount(); i++) builder.accept(vec.get(i));
                     }
                 }
             }
         }
-        double[] result = new double[values.size()];
-        for (int i = 0; i < values.size(); i++) result[i] = values.get(i);
-        return result;
+        return builder.build().toArray();
     }
 }
