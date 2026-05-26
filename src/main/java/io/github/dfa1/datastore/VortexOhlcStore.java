@@ -42,6 +42,21 @@ public class VortexOhlcStore implements OhlcStore {
         NativeLoader.loadJni();
     }
 
+    /**
+     * Shared Vortex session for the lifetime of the JVM.
+     *
+     * <p><strong>URI cache behaviour (upstream design):</strong> the session caches file
+     * footers and metadata keyed by URI. This is intentional: the primary deployment
+     * target is object storage (e.g. S3) where files are immutable once written.
+     * Consequence: if you write a Vortex file, read it, then overwrite the <em>same
+     * path</em> with different data and attempt to read again within the same session,
+     * the session returns stale cached metadata and the read fails with
+     * {@code [errno 22] SerializedArray buffer is too short for flatbuffer}.
+     *
+     * <p><strong>Workaround:</strong> always write to a fresh, unique path. Tests must
+     * never reuse the same file path across write–read cycles; {@code @TempDir} with
+     * a per-test unique filename satisfies this constraint automatically.
+     */
     private static final Session   SESSION = Session.create();
     private static final ArrowType F64     = new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
 
